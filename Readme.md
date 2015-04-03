@@ -1,12 +1,6 @@
-# N4Admin 160 Hot Fix
+PHP 5.4 tested version of Rainbow Six dedicated server statistics.
+Improved security, code readability and quality.
 
-v1.20as PHP-Script (C) 2003,2004 by =TSAF=Muschel and released under GNU-GPL
-Powered by N4URLPost - Copyright 2003,2004 =TSAF=Muschel and Neo4E656F
-
-This patch fixes incorrect stats being posted by the server.
-
-Just add the extra files in the "Server" folder to your server's main ravenshield directory.
-
-=============
-
-**Note from Repository Owner:** I am hosting this here because I am not sure how much longer the game will be around but the resources for RavenShield are definitely dwindeling so finding cool stuff like the N4Admin/Stats PHP project are becoming more difficult. If the original authors of these files want this repo taken down just send me an email. admin at ericnkatz.com
+WARNING!
+The original project is very dangerous. It has zero input sanitization.
+Any input will pass wirectly into PHP global variable space and to MySQL.
