@@ -12,6 +12,10 @@ BuildServerIdentNameArrays($db);
 require('language/' . $customlanguage . '.inc.php');
 require("header.php");
 
+/**
+ * @param $before
+ * @return mixed
+ */
 function decodenick($before)
 {
     $after = str_replace("^-^", "&", $before);
@@ -19,6 +23,10 @@ function decodenick($before)
     return $after;
 }
 
+/**
+ * @param $before
+ * @return mixed
+ */
 function nicksearchencode($before)
 {
     $after = str_replace("&", "^-^", $before);
@@ -75,10 +83,11 @@ if (isset($_GET['server'])) {
 }
 
 if (!isset($_GET['playersearch']) or $_GET['playersearch'] == "") {
-    $searchaddstring = "";
+    $searchAddString = "";
     $playersearch = "%";
 } else {
-    $searchaddstring = " and " . $Playertable . ".ubiname like '" . $_GET['playersearch'] . "'";
+    $searchAddString = " and " . $Playertable . ".ubiname like ?";
+    $playersearch = $_GET['playersearch'];
 }
 
 if ($server == "") {
@@ -152,7 +161,11 @@ if (isset($servernameident)) {
             $i = 1;
             echo "<br>";
         }
-        echo "<a class=nav href=\"playerstats.php?mode=" . $mode . "&server=" . $servers . "&playersearch=" . $playersearch . "&nicksearch=" . $nicksearch . "\">" . $servers . "</a>&nbsp;&nbsp;&nbsp;&nbsp;";
+        echo "<a class=nav href=\"playerstats.php?mode=" . $mode .
+             "&server=" . $servers .
+             "&playersearch=" . $playersearch .
+             "&nicksearch=" . $nicksearch . "\">" .
+             $servers . "</a>&nbsp;&nbsp;&nbsp;&nbsp;";
     }
     echo "</td></tr>";
     echo "<form><input type=hidden name=server value=\"" . $server . "\"><input type=hidden name=mode value=\"" . $mode . "\">";
@@ -215,7 +228,17 @@ if ($server !== "%") {
 
 foreach ($serveridents as $server => $serverident) {
     if (isset($Statstable[$mode])) {
-        $resubinames = db_query($db, "SELECT " . $Playertable . ".id as id FROM " . $Playertable . " INNER JOIN " . $Statstable[$mode] . " ON (" . $Statstable[$mode] . ".fromid = " . $Playertable . ".id) WHERE " . $Playertable . ".serverident='" . $serverident . "'" . $searchaddstring . " and " . $Playertable . ".ubiname<>'' GROUP by " . $Playertable . ".id");
+        $sql = "SELECT " . $Playertable . ".id as id FROM " . $Playertable .
+               " INNER JOIN " . $Statstable[$mode] . " ON (" . $Statstable[$mode] . ".fromid = " . $Playertable . ".id)".
+               " WHERE " . $Playertable . ".serverident=?" .
+               $searchAddString .
+               " and " . $Playertable . ".ubiname<>''" .
+               " GROUP by " . $Playertable . ".id";
+        if ($searchAddString) {
+            $resubinames = db_query($db, $sql, 'ss', $serverident, $_GET['playersearch']);
+        } else {
+            $resubinames = db_query($db, $sql, 's', $serverident);
+        }
         $ubicounted = db_num_rows($resubinames);
         echo "<table  border=0 cellspacing=0 width=" . $swidth . "><tr><td colspan=4 class=bigheader background=\"images/" . $design[$dset] . "_header.gif\">" . $text_onserver . ": " . $server . "</td><td colspan=3 align=right class=bigheader background=\"images/" . $design[$dset] . "_header.gif\">" . $text_gamemode[$mode] . "&nbsp;</td></tr>";
         echo "<tr><td class=randende colspan=7>" . $text_site . " (" . $site . ") : ";
@@ -227,7 +250,19 @@ foreach ($serveridents as $server => $serverident) {
         echo "<tr><td class=header background=\"images/" . $design[$dset] . "_middle.gif\"><b>Ubiname</td><td colspan=6 class=header background=\"images/" . $design[$dset] . "_middle.gif\"><b>" . $text_usednicks . "</td></tr></td></tr><tr height=2><td></td></tr></table>";
         $i = (($site - 1) * $displaynickononesite);
 
-        $resubinames = db_query($db, "SELECT " . $Playertable . ".id as id , " . $Playertable . ".ubiname as ubiname FROM " . $Playertable . " INNER JOIN " . $Statstable[$mode] . " ON (" . $Statstable[$mode] . ".fromid = " . $Playertable . ".id) WHERE " . $Playertable . ".serverident='" . $serverident . "'" . $searchaddstring . " and " . $Playertable . ".ubiname<>'' GROUP by " . $Playertable . ".id ORDER BY ubiname LIMIT " . $i . "," . $displayubiononesite);
+        $sql = "SELECT " . $Playertable . ".id as id , " . $Playertable . ".ubiname as ubiname FROM " . $Playertable .
+               " INNER JOIN " . $Statstable[$mode] . " ON (" . $Statstable[$mode] . ".fromid = " . $Playertable . ".id)" .
+               " WHERE " . $Playertable . ".serverident=?" .
+               $searchAddString .
+               " and " . $Playertable . ".ubiname<>''" .
+               " GROUP by " . $Playertable . ".id" .
+               " ORDER BY ubiname" .
+               " LIMIT ?,?";
+        if ($searchAddString) {
+            $resubinames = db_query($db, $sql, 'ssii', $serverident, $_GET['playersearch'], $i, $displayubiononesite);
+        } else {
+            $resubinames = db_query($db, $sql, 'sii', $serverident, $i, $displayubiononesite);
+        }
 
         $i = 0;
         while ($ubinames = db_fetch_array_assoc($resubinames)) {
